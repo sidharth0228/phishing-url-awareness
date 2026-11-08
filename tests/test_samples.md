@@ -1,6 +1,6 @@
 # Test Results
 
-**Python version:** 3.x | **Operating system:** macOS | **Date:** 2026-11-08
+**Python version:** 3.9.6 | **Operating system:** macOS | **Date:** 2026-11-08
 
 ## Original five test cases (Part 08)
 

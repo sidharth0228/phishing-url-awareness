@@ -86,7 +86,7 @@ Goodbye! Stay safe online.
 
 ## Testing
 
-All tests were executed on Python 3.x, macOS, 2026-11-08.
+All tests were executed on Python 3.9.6, macOS, 2026-11-08.
 
 ### Original five test cases (Part 08)
 
