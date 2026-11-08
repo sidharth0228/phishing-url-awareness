@@ -1,80 +1,116 @@
 import re
 from urllib.parse import urlparse
 
+
 def inspect_url(raw_url):
-    """Check visible URL text for selected warning signs."""
+    """Check visible URL text for phishing warning signs.
+
+    Returns a list of finding strings.
+    An empty list is never returned – either warnings or a clean message.
+    """
     url = raw_url.strip()
     findings = []
 
+    # Handle blank input before any parsing
     if not url:
-        return["No URL entered"]
+        return ["No URL entered. Please type a URL and press Enter."]
 
+    # Prepend a scheme if the user omitted it so urlparse works correctly
     candidate = url if "://" in url else "http://" + url
+
+    # Catch any parsing errors from badly formed strings
     try:
         parsed = urlparse(candidate)
         host = (parsed.hostname or "").lower()
     except Exception:
-        raise ValueError("The URL format could not be parsed: " + url)
+        raise ValueError("The URL could not be parsed. Check the format and try again.")
 
+    # A missing hostname means nothing useful can be checked
     if not host:
-        return ["Could not identify a hostname."]
+        return ["Could not identify a hostname in the URL."]
 
+    # --- Six original detection checks (preserved exactly) ---
+
+    # Check 1: @ symbol (can hide the real destination)
     if "@" in candidate:
-        findings.append("Contains an @ symbol; inspect carefully")
+        findings.append("Contains an @ symbol – the part before @ may not be the real site.")
 
+    # Check 2: Unusually long URL (common in obfuscation)
     if len(url) > 100:
-        findings.append("Unusually long URL (Over 100 charecters).")
-    
+        findings.append("Unusually long URL (over 100 characters).")
+
+    # Check 3: Raw IP address instead of a domain name
     if re.fullmatch(r"(?:\d{1,3}\.){3}\d{1,3}", host):
-        findings.append("Uses IP address instead of a fimiliar domain")
-    
+        findings.append("Uses an IP address instead of a familiar domain name.")
+
+    # Check 4: Many subdomains / hostname segments (5 or more labels)
     labels = [part for part in host.split(".") if part]
     if len(labels) >= 5:
-        findings.append("Contains many hostname segments/subdomains.")
-    
-    if "xn--" in host:
-        findings.append("Contains a punycode-style hostname.")
-    
-    if parsed.scheme.lower() == "http":
-        findings.append("Uses HTTP. HTTPS alone doesnot proves truest.")
+        findings.append("Contains many hostname segments / subdomains.")
 
+    # Check 5: Punycode-style hostname (can disguise look-alike characters)
+    if "xn--" in host:
+        findings.append("Contains a punycode-style hostname (xn--).")
+
+    # Check 6: Plain HTTP (unencrypted connection)
+    if parsed.scheme.lower() == "http":
+        findings.append("Uses HTTP – the connection is not encrypted.")
+
+    # If none of the checks fired, report clean (but remind the user this is not a guarantee)
     if not findings:
-        findings.append("No listed warning signs found . this does Not prove safety.")
+        findings.append(
+            "No listed warning signs found. "
+            "This does NOT prove the URL is safe – always verify the source."
+        )
 
     return findings
 
+
 def main():
-    print("EWB Phising URL Awareness Checker")
-    print("Text checks only - this program does not opens URLs.")
-    print("Developed by Sidharth Sahoo")
-    print("Type 'q', 'quit', or 'exit' to stop.\n")
+    # --- Header ---
+    print("=" * 55)
+    print("  EWB Phishing URL Awareness Checker")
+    print("  Text-based checks only – no URLs are opened.")
+    print("  Developed by Sidharth Sahoo")
+    print("=" * 55)
+    print("Type  q / quit / exit  to stop.\n")
 
     while True:
-        raw_url = input("Enter a sample URL to inspect: ")
+        raw_url = input("Enter a URL to inspect: ").strip()
 
-        if raw_url.strip().lower() in ("q", "quit", "exit"):
-            print("Goodbye!")
+        # Quit keywords
+        if raw_url.lower() in ("q", "quit", "exit"):
+            print("\nGoodbye! Stay safe online.")
             break
 
+        # Run checks – catch any parse errors gracefully
         try:
             findings = inspect_url(raw_url)
-        except Exception as e:
-            print("- Malformed URL: could not parse (" + str(e) + ")")
-            print()
+        except ValueError as e:
+            print(f"\n  Error: {e}\n")
             continue
 
-        # Count findings that are actual warnings (not the "no warnings" message)
-        warnings = [f for f in findings if not f.startswith("No listed warning signs")]
+        # Separate real warnings from informational messages
+        # (empty-input and no-hostname messages are not phishing warnings)
+        SKIP_PREFIXES = ("No URL entered", "Could not identify", "No listed warning")
+        warnings = [f for f in findings if not any(f.startswith(p) for p in SKIP_PREFIXES)]
         warning_count = len(warnings)
 
-        print("\nResult:")
+        # --- Results ---
+        print("\n" + "-" * 55)
+        print("  Results")
+        print("-" * 55)
         for item in findings:
-            print("- " + item)
+            print(f"  - {item}")
 
         if warning_count > 0:
-            print("\n⚠  REVIEW CAREFULLY – " + str(warning_count) + " warning sign(s) found.")
+            print("-" * 55)
+            print(f"  ⚠  REVIEW CAREFULLY – {warning_count} warning sign(s) found.")
 
-        print("\nNever enter passwords from unexpected links.\n")
+        print("-" * 55)
+        print("  Reminder: Never enter passwords from unexpected links.")
+        print("-" * 55 + "\n")
+
 
 if __name__ == "__main__":
     main()

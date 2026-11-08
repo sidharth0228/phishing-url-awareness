@@ -1,1 +1,2 @@
-# No extra packages needed. This project uses only Python's built-in libraries.
+# No extra packages needed.
+# This project uses only Python built-in libraries: re, urllib.parse
