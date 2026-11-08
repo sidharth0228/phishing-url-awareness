@@ -15,7 +15,7 @@ def inspect_url(raw_url):
     if not url:
         return ["No URL entered. Please type a URL and press Enter."]
 
-    # Prepend a scheme if the user omitted it so urlparse works correctly
+    # Prepend a scheme if the user omitted it so urlparse can read the hostname
     candidate = url if "://" in url else "http://" + url
 
     # Catch any parsing errors from badly formed strings
@@ -28,6 +28,11 @@ def inspect_url(raw_url):
     # A missing hostname means nothing useful can be checked
     if not host:
         return ["Could not identify a hostname in the URL."]
+
+    # A real hostname must contain at least one dot (e.g. example.com).
+    # Single-label strings like 'hello' or 'not_a_valid_url' are not valid URLs.
+    if "." not in host:
+        return ["This does not look like a valid URL (no domain found)."]
 
     # --- Six original detection checks (preserved exactly) ---
 
@@ -91,8 +96,13 @@ def main():
             continue
 
         # Separate real warnings from informational messages
-        # (empty-input and no-hostname messages are not phishing warnings)
-        SKIP_PREFIXES = ("No URL entered", "Could not identify", "No listed warning")
+        # (empty-input, no-hostname, and no-warnings messages are not phishing warnings)
+        SKIP_PREFIXES = (
+            "No URL entered",
+            "Could not identify",
+            "No listed warning",
+            "This does not look",
+        )
         warnings = [f for f in findings if not any(f.startswith(p) for p in SKIP_PREFIXES)]
         warning_count = len(warnings)
 

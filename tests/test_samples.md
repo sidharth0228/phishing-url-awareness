@@ -17,7 +17,7 @@
 | # | Input | Expected result | Actual result | Pass/Fail |
 |---|-------|-----------------|---------------|-----------|
 | 6 | *(empty)* | No crash; clear message | No URL entered. Please type a URL and press Enter. | PASS |
-| 7 | `not_a_valid_url` | No crash; handled gracefully | HTTP warning shown; program continues. | PASS |
+| 7 | `not_a_valid_url` | No crash; clear validation message | This does not look like a valid URL (no domain found). | PASS |
 | 8 | Two URLs in sequence | Loop continues after each | Both URLs inspected; loop did not exit early. | PASS |
 | 9 | `q` | Program exits cleanly | Goodbye! Stay safe online. | PASS |
 
