@@ -10,8 +10,11 @@ def inspect_url(raw_url):
         return["No URL entered"]
 
     candidate = url if "://" in url else "http://" + url
-    parsed = urlparse(candidate)
-    host = (parsed.hostname or "").lower()
+    try:
+        parsed = urlparse(candidate)
+        host = (parsed.hostname or "").lower()
+    except Exception:
+        raise ValueError("The URL format could not be parsed: " + url)
 
     if not host:
         return ["Could not identify a hostname."]
@@ -44,13 +47,34 @@ def main():
     print("EWB Phising URL Awareness Checker")
     print("Text checks only - this program does not opens URLs.")
     print("Developed by Sidharth Sahoo")
-    raw_url = input("Enter a sample URL to inspect: ")
+    print("Type 'q', 'quit', or 'exit' to stop.\n")
 
-    print("\nResult: ")
-    for item in inspect_url(raw_url):
-        print("- " + item)
+    while True:
+        raw_url = input("Enter a sample URL to inspect: ")
 
-    print("\nNever enter passwords from unexpected links.")
+        if raw_url.strip().lower() in ("q", "quit", "exit"):
+            print("Goodbye!")
+            break
+
+        try:
+            findings = inspect_url(raw_url)
+        except Exception as e:
+            print("- Malformed URL: could not parse (" + str(e) + ")")
+            print()
+            continue
+
+        # Count findings that are actual warnings (not the "no warnings" message)
+        warnings = [f for f in findings if not f.startswith("No listed warning signs")]
+        warning_count = len(warnings)
+
+        print("\nResult:")
+        for item in findings:
+            print("- " + item)
+
+        if warning_count > 0:
+            print("\n⚠  REVIEW CAREFULLY – " + str(warning_count) + " warning sign(s) found.")
+
+        print("\nNever enter passwords from unexpected links.\n")
 
 if __name__ == "__main__":
     main()
